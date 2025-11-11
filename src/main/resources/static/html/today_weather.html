@@ -1,0 +1,120 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>실시간 날씨 조회하기</title>
+
+    <link rel="stylesheet" href="/css/table.css">
+
+    <script src="/js/jquery-3.6.0.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // 위도와 경도 변수 초기화
+            let lon, lat;
+
+            // 1. 사용자 위치 정보(위도, 경도) 가져오기
+            navigator.geolocation.getCurrentPosition(function (position) {
+                lat = position.coords.latitude; // 위도
+                lon = position.coords.longitude; // 경도
+
+                // 2. 위치 정보 획득 후 AJAX 호출
+                $.ajax({
+                    url: "/weather/getWeather",
+                    type: "get",
+                    dataType: "JSON",
+                    data: {
+                        "lon": lon,
+                        "lat": lat
+                    },
+
+                    // 3. 서버 응답 성공 시 처리
+                    success: function (json) {
+                        // 현재 온도 표시
+                        $("#currentTemp").append(json.currentTemp + " °C"); // 단위 추가
+
+                        const dailyList = json.dailyList; // List 구조의 일별 날씨 정보
+
+                        // 주간 예보 테이블에 데이터 추가
+                        for (const daily of dailyList) {
+                            let day = daily.day;         // 기준 일자 (예: 2025-11-04)
+                            let sunrise = daily.sunrise; // 해 뜨는 시간
+                            let sunset = daily.sunset;   // 해 지는 시간
+                            let moonrise = daily.moonrise; // 달 뜨는 시간
+                            let moonset = daily.moonset;   // 달 지는 시간
+                            let dayTemp = daily.dayTemp;   // 평균 기온
+                            let dayTempMax = daily.dayTempMax; // 최고 기온
+                            let dayTempMin = daily.dayTempMin; // 최저 기온
+
+                            // 테이블 행 생성 및 데이터 추가
+                            let rowHtml = '<div class="divTableRow">';
+
+                            // 1. 날짜
+                            rowHtml += '<div class="divTableCell">' + day + '</div>';
+                            // 2. 해 뜨는 시간
+                            rowHtml += '<div class="divTableCell">' + sunrise + '</div>';
+                            // 3. 해 지는 시간
+                            rowHtml += '<div class="divTableCell">' + sunset + '</div>';
+                            // 4. 달 뜨는 시간
+                            rowHtml += '<div class="divTableCell">' + moonrise + '</div>';
+                            // 5. 달 지는 시간
+                            rowHtml += '<div class="divTableCell">' + moonset + '</div>';
+                            // 6. 평균 기온
+                            rowHtml += '<div class="divTableCell">' + dayTemp + ' °C</div>';
+                            // 7. 최고 기온
+                            rowHtml += '<div class="divTableCell">' + dayTempMax + ' °C</div>';
+                            // 8. 최저 기온
+                            rowHtml += '<div class="divTableCell">' + dayTempMin + ' °C</div>';
+
+                            rowHtml += '</div>'; // divTableRow 닫기
+
+                            $("#daily_weather").append(rowHtml);
+                        }
+                    },
+
+                    // 4. 서버 응답 실패 시 처리 (선택 사항이나 디버깅에 유용)
+                    error: function(xhr, status, error) {
+                        console.error("AJAX 요청 실패:", status, error);
+                        alert("날씨 정보를 가져오는 데 실패했습니다. 서버 로그를 확인하세요.");
+                    }
+                });
+            }); // navigator.geolocation.getCurrentPosition 끝
+
+        }); // $(document).ready 끝
+    </script>
+</head>
+<body>
+
+<h2>오늘의 날씨 실시간 조회</h2>
+<hr><br>
+<div class="divTable minimalistBlack">
+    <div class="divTableRow">
+        <div class="divTableCell" style="width: 40%">현재 기온</div>
+        <div class="divTableCell" style="width: 40%" id="currentTemp"></div>
+    </div>
+</div>
+
+<br><br>
+
+<h2>주간 날씨 실시간 조회</h2>
+<hr><br>
+
+<div class="divTable minimalistBlack">
+    <div class="divTableHeading">
+        <div class="divTableRow">
+            <div class="divTableHead">날짜</div>
+            <div class="divTableHead">해 뜨는 시간</div>
+            <div class="divTableHead">해 지는 시간</div>
+            <div class="divTableHead">달 뜨는 시간</div>
+            <div class="divTableHead">달 지는 시간</div>
+            <div class="divTableHead">평균 기온</div>
+            <div class="divTableHead">최고 기온</div>
+            <div class="divTableHead">최저 기온</div>
+        </div>
+    </div>
+
+    <div class="divTableBody" id="daily_weather">
+    </div>
+</div>
+</body>
+</html>
